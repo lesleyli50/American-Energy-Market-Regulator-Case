@@ -1,7 +1,5 @@
 # American-Energy-Market-Regulator-Case
 
-<Scenario Overview>
-  
 The American Energy Market Regulator (AEMR) is responsible for looking after the
 United States of America’s domestic energy network. The regulator’s responsibility is to
 ensure that America’s energy network remains reliable with minimal disruptions, which
