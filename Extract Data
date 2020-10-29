@@ -1,0 +1,82 @@
+1) What are the most common outage types?
+
+SELECT
+COUNT(*) AS Total_Number_Outage_Events, Status, Reason, YEAR(Start_Time) AS Year
+FROM AEMR
+WHERE YEAR(Start_Time) IN ('2016','2017')
+AND Status='Approved'
+GROUP BY Year, Status, Reason
+ORDER BY Year, Total_Number_Outage_Events DESC
+
+2) How long do they tend to last?
+
+SELECT
+Status, Reason, COUNT(*) AS Total_Number_Outage_Events, 
+ROUND(((AVG(TIMESTAMPDIFF(MINUTE,Start_Time, End_Time)))/60)/24,2) AS Average_Outage_Duration_Time_Days,
+YEAR(Start_Time) AS Year
+FROM AEMR
+WHERE YEAR(Start_Time) IN ('2016','2017')
+AND Status='Approved'
+GROUP BY Status, Reason, YEAR(Start_Time)
+ORDER BY Year,Average_Outage_Duration_Time_Days DESC
+
+3) How frequently do the outages occur?
+
+SELECT
+Status, Reason, COUNT(*) AS Total_Number_Outage_Events, 
+MONTH(Start_Time) AS Month
+FROM AEMR
+WHERE YEAR(Start_Time) IN ('2016','2017')
+AND Status='Approved'
+GROUP BY Status, Reason, Month
+ORDER BY Reason, Month
+
+4) Are there any energy providers that have more outages than their peers which may indicate that these providers are unreliable?
+
+SELECT
+COUNT(*) AS Total_Number_Outage_Events, Participant_Code, Status, YEAR(Start_Time) AS Year
+FROM AEMR
+WHERE Status='Approved'
+GROUP BY Participant_Code,Status,YEAR(Start_Time)
+ORDER BY YEAR(Start_Time),Participant_Code
+
+SELECT 
+Participant_Code,Status,YEAR(Start_Time) AS Year,
+ROUND(AVG((TIMESTAMPDIFF(MINUTE, Start_Time, End_Time)/60)/24),2) AS Average_Outage_Duration_Time_Days
+FROM AEMR
+WHERE Status='Approved'
+GROUP BY Participant_Code,Status,YEAR(Start_Time)
+ORDER BY YEAR(Start_Time),CAST(Avg(CAST(TIMESTAMPDIFF(DAY,Start_Time,End_Time)AS DECIMAL(18,2))) AS DECIMAL(18,2)) DESC
+
+5) Of the outage types in 2016 and 2017, what percent were forced outages?
+
+SELECT
+SUM(CASE WHEN Reason = 'Forced' THEN 1 ELSE 0 END) AS Total_Number_Forced_Outage_Events,  
+COUNT(*) AS Total_Number_Outage_Events,
+CAST((CAST(SUM(CASE WHEN Reason = 'Forced' THEN 1 ELSE 0 END)AS DECIMAL(18,2))/CAST(Count(*) AS DECIMAL(18,2)))*100 AS DECIMAL(18,2)) AS Forced_Outage_Percentage,
+YEAR(Start_Time) AS Year
+FROM AEMR
+WHERE Status = 'Approved'
+GROUP BY YEAR(Start_Time)
+
+6) What was the average duration for a forced outage during both 2016 and 2017? Have we seen an increase in the average duration of forced outages?
+
+SELECT Status,Reason,YEAR(Start_Time) AS Year,
+ROUND(AVG(Outage_MW),2) AS Avg_Outage_MW_Loss,
+Cast(ROUND(AVG(Cast(TIMESTAMPDIFF(MINUTE, Start_Time, End_Time) AS DECIMAL(18,2))),2) AS DECIMAL(18,2)) AS Average_Outage_Duration_Time_Minutes
+FROM AEMR
+WHERE Status='Approved' 
+GROUP BY Status,Reason,YEAR(Start_Time)
+ORDER BY YEAR(Start_Time),Reason
+
+7) Which energy providers tended to be the most unreliable?
+SELECT Participant_Code,Facility_Code,Status,YEAR(Start_Time) AS Year,
+ROUND(AVG(Outage_MW),2) AS Avg_Outage_MW_Loss,
+ROUND(SUM(Outage_MW),2) AS Summed_Energy_Lost
+FROM AEMR
+WHERE Status='Approved' AND Reason='Forced'
+GROUP BY Participant_Code,Facility_Code,Status,YEAR(Start_Time)
+ORDER BY YEAR(Start_Time) ASC,ROUND(SUM(Outage_MW),2) DESC
+
+
+
